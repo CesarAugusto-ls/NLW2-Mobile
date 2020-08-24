@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'
 import TeacherList from '../pages/TeacherList';
@@ -7,6 +8,12 @@ import Favorites from '../pages/Favorites';
 const { Navigator, Screen } = createBottomTabNavigator();
 
 function StudyTabs() {
+    const androidStyle = Platform.OS === 'android' ?
+        {
+            inactiveBackgroundColor: '#fafafc',
+            activeBackgroundColor: '#ebebf5',
+        } : null;
+
     return (
         <Navigator
             tabBarOptions={{
@@ -30,8 +37,7 @@ function StudyTabs() {
                     fontSize: 13,
                     marginLeft: 16,
                 },
-                inactiveBackgroundColor: '#fafafc',
-                activeBackgroundColor: '#ebebf5',
+                ...androidStyle,
                 inactiveTintColor: '#c1bccc',
                 activeTintColor: '#32264d'
             }}
