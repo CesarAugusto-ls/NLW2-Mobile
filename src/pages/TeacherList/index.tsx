@@ -2,10 +2,11 @@ import React from 'react';
 import { View, ScrollView, Text, TextInput } from 'react-native';
 import { BorderlessButton, RectButton } from 'react-native-gesture-handler'
 import { Feather } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-community/async-storage'
 import api from '../../services/api';
 
 import PageHeader from '../../components/PageHeader';
-import TeacherItem from '../../components/TeacherItem';
+import TeacherItem, { Teacher } from '../../components/TeacherItem';
 
 import styles from './styles'
 
@@ -14,13 +15,27 @@ function TeacherList() {
     const [subject, setSubject] = React.useState('');
     const [week_day, setWeekDay] = React.useState('');
     const [time, setTime] = React.useState('');
-    const [teachers, setTeachers] = React.useState([])
+    const [teachers, setTeachers] = React.useState([]);
+    const [favorites, setFavorites] = React.useState<number[]>([]);
+
+    function loadFavorites() {
+        AsyncStorage.getItem('favorites').then(response => {
+            if (response) {
+                const favoritedTeachers = JSON.parse(response)
+                const favoritedTeachersIds = favoritedTeachers.map((teacher: Teacher) => {
+                    return teacher.id
+                });
+                setFavorites(favoritedTeachersIds)
+            }
+        })
+    }
 
     function handleToggleFiltersVisible() {
         setIsFiltersVisible(!isFiltersVisible);
     }
 
     async function handleFiltersSubmit() {
+        loadFavorites();
         const response = await api.get('/classes', {
             params: {
                 subject,
@@ -97,7 +112,13 @@ function TeacherList() {
                 }}
             >
                 {teachers.map((teacher, index) => {
-                    return <TeacherItem key={index} teacher={teacher} />
+                    return (
+                        <TeacherItem
+                            key={index}
+                            teacher={teacher}
+                            favorited={favorites.includes(teacher.id)}
+                        />
+                    )
                 })
                 }
             </ScrollView>

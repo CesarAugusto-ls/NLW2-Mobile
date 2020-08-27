@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, Text, Linking } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler'
+import AsyncStorage from '@react-native-community/async-storage'
 
 import heartOutlineIcon from '../../assets/images/icons/heart-outline.png'
 import unfavoriteIcon from '../../assets/images/icons/unfavorite.png'
@@ -8,23 +9,46 @@ import whatsappIcon from '../../assets/images/icons/whatsapp.png'
 
 import styles from './styles';
 
+export interface Teacher {
+    id: number,
+    avatar: string,
+    bio: string,
+    cost: number,
+    name: string,
+    subject: string,
+    user_id: number,
+    whatsapp: string,
+}
+
 interface TeacherItemProps {
-    teacher: {
-        id: number,
-        avatar: string,
-        bio: string,
-        cost: number,
-        name: string,
-        subject: string,
-        user_id: number,
-        whatsapp: string,
-    }
+    teacher: Teacher
+    favorited: boolean,
 }
 
 const TeacherItem: React.FC<TeacherItemProps> = (props) => {
+    const [isFavorited, setIsFavorited] = React.useState(props.favorited)
 
     function handleLinkToWhatsapp() {
         Linking.openURL(`whatsapp://send?phone=${props.teacher.whatsapp}`)
+    }
+
+    async function handleToggleFavorite() {
+        const favorites = await AsyncStorage.getItem('favorites');
+        let favoritesArray = []
+        if (favorites) {
+            favoritesArray = JSON.parse(favorites);
+        }
+        if (isFavorited) {
+            const favoriteIndex = favoritesArray.findIndex((teacher: Teacher) => {
+                return teacher.id === props.teacher.id
+            })
+            favoritesArray.splice(favoriteIndex, 1);
+            setIsFavorited(false);
+        } else {
+            favoritesArray.push(props.teacher)
+            setIsFavorited(true);
+        }
+        await AsyncStorage.setItem('favorites', JSON.stringify(favoritesArray))
     }
 
     return (
@@ -52,8 +76,21 @@ const TeacherItem: React.FC<TeacherItemProps> = (props) => {
                 </Text>
 
                 <View style={styles.buttonsContainer}>
-                    <RectButton style={[styles.favoriteButton, styles.favorited]}>
-                        <Image source={unfavoriteIcon} />
+                    <RectButton
+                        onPress={handleToggleFavorite}
+                        style={[
+                            styles.favoriteButton,
+                            isFavorited ?
+                                styles.favorited
+                                :
+                                {}
+                        ]}>
+                        {isFavorited ?
+                            <Image source={unfavoriteIcon} />
+                            :
+                            <Image source={heartOutlineIcon} />
+                        }
+
                     </RectButton>
 
                     <RectButton onPress={handleLinkToWhatsapp} style={styles.contactButton}>
